@@ -21,7 +21,8 @@ using namespace std;
 #include "fonts.h"
 
 //constants
-const int MAX_PARTICLES = 1000;
+const int MAX_PARTICLES = 10;
+const int MAX_TYPEONE = 1000;
 const int MAX_BOXES = 5;
 //some structures
 
@@ -72,9 +73,11 @@ public:
 } box, particle(2.0,0.0,g.xres/2.0,g.yres/4.0*3.0);
 
 Box particles[MAX_PARTICLES];
+Box particle1[MAX_TYPEONE];
 Box boxes[MAX_BOXES];
 int n = 0;
 int m = 0;
+int a = 0;
 
 class X11_wrapper {
 private:
@@ -219,15 +222,15 @@ void X11_wrapper::check_resize(XEvent *e)
 }
 //-----------------------------------------------------------------------------
 
-void make_particle(int x, int y)
+void make_particle_click(int x, int y)
 {
 	if ( n >= MAX_PARTICLES)
 	    return;
-    	particles[n].w = 2.0;
-	particles[n].pos[0] = x;
-	particles[n].pos[1] = y;
-	particles[n].vel[0] = particles[n].vel[1] = 0.0;
-	n++;
+		particles[n].w = 2.0;
+		particles[n].pos[0] = x;
+		particles[n].pos[1] = y;
+		particles[n].vel[0] = particles[n].vel[1] = 0.0;
+		n++;
 	
 }
 void make_boxes(int max) {
@@ -239,12 +242,19 @@ void make_boxes(int max) {
 		boxes[m].pos[0] = g.xres*x; 
 		boxes[m].pos[1] = g.yres*y;
 		boxes[m].vel[0] = boxes[m].vel[1] = 0.0;
-		cout << "box number " << m << ": position (" << boxes[m].pos[0] 
-             << ", " << boxes[m].pos[1] << ") and velocity : " << boxes[m].vel[0] << endl;
-		cout << "repeating " << endl;
 		x = x + 0.50f;
 		y = y - 0.5f;
 		m++;	
+	}
+}
+void generate_particle1(int max) {
+	while ( a != max ) {
+		particle1[a].w = 2.0;
+		particle1[a].pos[0] = g.xres*(0.23 + static_cast <float> (rand()) /
+				( static_cast <float> (RAND_MAX/(0.27-0.23))));
+		particle1[a].pos[1] = g.yres*4.5;
+		particle1[a].vel[0] = particle1[a].vel[1] = 0.0;
+		a++;
 	}
 }
 void X11_wrapper::check_mouse(XEvent *e)
@@ -268,7 +278,7 @@ void X11_wrapper::check_mouse(XEvent *e)
 			//Left button was pressed.
 			int y = g.yres - e->xbutton.y;
 			int x = e ->xbutton.x;
-			make_particle(x,y);
+			make_particle_click(x,y);
 		    	return;
 		}
 		if (e->xbutton.button==3) {
@@ -324,35 +334,22 @@ void init_opengl(void)
 
 void physics()
 {
-	particle.vel[1] -= 0.01;
-    	particle.pos[0] += particle.vel[0];
-	particle.pos[1] += particle.vel[1];
-	//
+	//Give particles velocity
+	for (int i=0; i<a; i++ ) {
+		particle1[i].vel[1] -= 0.75;
+ 		particle1[i].pos[0] += particle1[i].vel[0];
+		particle1[i].pos[1] += particle1[i].vel[1];
 	// check for collision
-	if (particle.pos[1] < (box.pos[1] + box.w) && 
-	    particle.pos[1] > (box.pos[1] - box.w) &&
-	    particle.pos[0] > (box.pos[0] - box.w) &&
-	    particle.pos[0] < (box.pos[0] + box.w)) { 
-	    particle.vel[1] = 0.0;
-	    particle.vel[0] += 0.01;
-	}
-	for (int i=0; i<n; i++ ) {
-		particles[i].vel[1] -= 0.75;
-    		particles[i].pos[0] += particles[i].vel[0];
-		particles[i].pos[1] += particles[i].vel[1];
-		//
-		// check for collision
-		for (int j=0; j<MAX_BOXES; j++) {
-			if (particles[i].pos[1] < (boxes[j].pos[1] + boxes[j].w) && 
-	       	    	particles[i].pos[1] > (boxes[j].pos[1] - boxes[j].w) &&
-	     	    	particles[i].pos[0] > (boxes[j].pos[0] - boxes[j].l) &&
-	    	    	particles[i].pos[0] < (boxes[j].pos[0] + boxes[j].l)) { 
-	            	particles[i].vel[1] = 1;
-	            	particles[i].vel[0] += 0.15;
+		for (int p=0; p < MAX_BOXES; p++) {
+			if (particle1[i].pos[1] < (boxes[p].pos[1] + boxes[p].w) &&
+				particle1[i].pos[1] > (boxes[p].pos[1] - boxes[p].w) &&
+				particle1[i].pos[0] > (boxes[p].pos[0] - boxes[p].l) &&
+				particle1[i].pos[0] < (boxes[p].pos[0] + boxes[p].l)) {
+				particle1[i].vel[1] = 1;
+				particle1[i].vel[0] += 0.15;
 			}
-			
-			if (particles[i].pos[1] < 0.0 ) {
-		    	particles[i] = particles[--n];
+			if (particle1[i].pos[1] < 0.0 ) {
+				particle1[i] = particle1[--a];
 			}
 		}
 	}
@@ -361,11 +358,11 @@ void physics()
 void render()
 {
 	Rect r;
+	make_boxes(MAX_BOXES);
+	generate_particle1(MAX_TYPEONE);
 	glClear(GL_COLOR_BUFFER_BIT);
 
-	//
   	//Draw boxes
-	make_boxes(MAX_BOXES);
 	for ( int i = 0; i < MAX_BOXES; i++ ) {	
 		glPushMatrix();
 		glColor3ub(80, 160, 80);
@@ -378,7 +375,7 @@ void render()
 		glEnd();
 		glPopMatrix();
 	}
-	//
+	
 	//Print Words
 	r.bot = g.yres - 20;
 	r.left = 10;
@@ -405,7 +402,7 @@ void render()
 	r.left = 860;
 	r.center = 0;
 	ggprint8b(&r, 16, 0x00ffff00, " MAINTENANCE ");
-	//
+	
 	//Draw Circle
 	glPushMatrix();
 	glColor3ub(80, 160, 80);
@@ -418,32 +415,20 @@ void render()
 	glEnd();
 	glPopMatrix();
 	
-	//
-	//Draw particle.
-	glPushMatrix();
-	glColor3ub(50,60, 255);
-	glTranslatef(particle.pos[0], particle.pos[1], 0.0f);
-	glBegin(GL_QUADS);
-		glVertex2f(-particle.w, -particle.w);
-		glVertex2f(-particle.w,  particle.w);
-		glVertex2f( particle.w,  particle.w);
-		glVertex2f( particle.w, -particle.w);
-	glEnd();
-	glPopMatrix();
-	
-	//Draw particles.
-	for (int i=0; i<n ; i++ ) {
+	//Draw particles 
+	for (int i=0; i<MAX_TYPEONE ; i++ ) {
 		glPushMatrix();
 		glColor3ub(150,160, 255);
-		glTranslatef(particles[i].pos[0], particles[i].pos[1], 0.0f);
+		glTranslatef(particle1[i].pos[0], particle1[i].pos[1], 0.0f);
 		glBegin(GL_QUADS);
-			glVertex2f(-particles[i].w, -particles[i].w);
-			glVertex2f(-particles[i].w,  particles[i].w);
-			glVertex2f( particles[i].w,  particles[i].w);
-			glVertex2f( particles[i].w, -particles[i].w);
+			glVertex2f(-particle1[i].w, -particle1[i].w);
+			glVertex2f(-particle1[i].w,  particle1[i].w);
+			glVertex2f( particle1[i].w,  particle1[i].w);
+			glVertex2f( particle1[i].w, -particle1[i].w);
 		glEnd();
 		glPopMatrix();
 	}
+
 }
 
 
