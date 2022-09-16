@@ -21,8 +21,7 @@ using namespace std;
 #include "fonts.h"
 
 //constants
-const int MAX_PARTICLES = 10;
-const int MAX_TYPEONE = 1000;
+const int MAX_PARTICLES = 1000;
 const int MAX_BOXES = 5;
 //some structures
 
@@ -73,11 +72,8 @@ public:
 } box, particle(2.0,0.0,g.xres/2.0,g.yres/4.0*3.0);
 
 Box particles[MAX_PARTICLES];
-Box particle1[MAX_TYPEONE];
 Box boxes[MAX_BOXES];
 int n = 0;
-int m = 0;
-int a = 0;
 
 class X11_wrapper {
 private:
@@ -222,17 +218,6 @@ void X11_wrapper::check_resize(XEvent *e)
 }
 //-----------------------------------------------------------------------------
 
-void make_particle_click(int x, int y)
-{
-	if ( n >= MAX_PARTICLES)
-	    return;
-		particles[n].w = 2.0;
-		particles[n].pos[0] = x;
-		particles[n].pos[1] = y;
-		particles[n].vel[0] = particles[n].vel[1] = 0.0;
-		n++;
-	
-}
 void make_boxes(int max) {
 	float x = 0.25; 
 	float y = 4;
@@ -247,7 +232,16 @@ void make_boxes(int max) {
 		m++;	
 	}
 }
-void generate_particle1(int max) {
+void make_particle(int x, int y) {
+	if (n >= MAX_PARTICLES)
+		return;
+	particles[n].w = 2.0;
+	particles[n].pos[0] =
+	particles[n].pos[1]
+	particles[n].
+
+} 
+/*void generate_particle1(int x, int y) {
 	while ( a != max ) {
 		particle1[a].w = 2.0;
 		particle1[a].pos[0] = g.xres*(0.23 + static_cast <float> (rand()) /
@@ -256,7 +250,7 @@ void generate_particle1(int max) {
 		particle1[a].vel[0] = particle1[a].vel[1] = 0.0;
 		a++;
 	}
-}
+}*/
 void X11_wrapper::check_mouse(XEvent *e)
 {
 	static int savex = 0;
@@ -278,7 +272,6 @@ void X11_wrapper::check_mouse(XEvent *e)
 			//Left button was pressed.
 			int y = g.yres - e->xbutton.y;
 			int x = e ->xbutton.x;
-			make_particle_click(x,y);
 		    	return;
 		}
 		if (e->xbutton.button==3) {
@@ -359,8 +352,17 @@ void render()
 {
 	Rect r;
 	make_boxes(MAX_BOXES);
-	generate_particle1(MAX_TYPEONE);
+	generate_particle1(MAX_PARTICLES);
 	glClear(GL_COLOR_BUFFER_BIT);
+	float number = 0;
+	number = rand() % 20;
+	int count = 0;
+	if ( count%2 == ) {
+		make_a_particle((box.pos[0] - 2.5*box.w + number), (box.pos[1] + 4*box.w));
+	}
+	else
+		make_a_particle((box.pos[0] - 2.5*box.w - number), (box.pos[1] + 4*box.w));
+
 
   	//Draw boxes
 	for ( int i = 0; i < MAX_BOXES; i++ ) {	
@@ -415,8 +417,8 @@ void render()
 	glEnd();
 	glPopMatrix();
 	
-	//Draw particles 
-	for (int i=0; i<MAX_TYPEONE ; i++ ) {
+	/*Draw particles 
+	for (int i=0; i<MAX_PARTICLES ; i++ ) {
 		glPushMatrix();
 		glColor3ub(150,160, 255);
 		glTranslatef(particle1[i].pos[0], particle1[i].pos[1], 0.0f);
@@ -428,7 +430,8 @@ void render()
 		glEnd();
 		glPopMatrix();
 	}
-
+	*/
+	
 }
 
 
